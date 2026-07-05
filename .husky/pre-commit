@@ -1,1 +1,10 @@
-bun run lint
+#!/usr/bin/env sh
+
+# Secrets detection - fail fast if secrets found
+gitleaks protect --staged --verbose
+
+# Lint & format staged files
+pnpm lint-staged
+
+# Type check
+pnpm typecheck

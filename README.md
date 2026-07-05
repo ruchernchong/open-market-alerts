@@ -38,7 +38,7 @@ popup dashboard with user preference management.
 - **Data Fetching**: TanStack Query for efficient API management
 - **UI Components**: shadcn/ui component library with Radix UI primitives
 - **Charts**: Recharts for data visualization
-- **Package Manager**: Bun
+- **Package Manager**: pnpm
 - **Code Quality**: Biome for linting and formatting
 - **Extension**: Chrome Manifest V3 with @crxjs/vite-plugin
 
@@ -46,8 +46,8 @@ popup dashboard with user preference management.
 
 ### Prerequisites
 
-- [Bun](https://bun.sh/) (recommended package manager)
-- Node.js 18+
+- [pnpm](https://pnpm.io/) (package manager)
+- Node.js 26+
 
 ### Installation
 
@@ -57,26 +57,26 @@ git clone https://github.com/ruchernchong/fed-open-market-alerts.git
 cd fed-open-market-alerts
 
 # Install dependencies
-bun install
+pnpm install
 ```
 
 ### Development
 
 ```bash
 # Start development server
-bun dev
+pnpm dev
 
 # Run linting with automatic fixes
-bun run lint
+pnpm lint
 
 # Build for production
-bun run build
+pnpm build
 
 # Preview production build
-bun run preview
+pnpm preview
 
 # Run semantic-release locally (for testing)
-bun run release
+pnpm release
 ```
 
 The application will be available at `http://localhost:5173`
@@ -141,7 +141,7 @@ The project includes Chrome extension support with automated notifications and u
 
 To load the extension in development:
 
-1. Run `bun run build`
+1. Run `pnpm build`
 2. Open Chrome and go to `chrome://extensions/`
 3. Enable "Developer mode"
 4. Click "Load unpacked" and select the `dist` folder
@@ -218,7 +218,7 @@ chore(deps): update react to v19.1.2
 2. Use the established component structure
 3. Ensure TypeScript types are properly defined
 4. Write commit messages following conventional commit format
-5. Run `bun run lint` before committing
+5. Run `pnpm lint` before committing
 6. Test both web and extension builds
 
 ### Release Process
