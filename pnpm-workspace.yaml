@@ -2,6 +2,9 @@ packages:
   - .
 
 allowBuilds:
+  "@heroui-pro/react": true
   esbuild: false
+  heroui-native-pro: true
+  heroui-pro: true
 
 savePrefix: ""
