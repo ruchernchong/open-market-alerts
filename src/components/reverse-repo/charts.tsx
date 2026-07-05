@@ -129,7 +129,7 @@ export const Charts = ({ operations }: ChartsProps) => {
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
             <ComposedChart accessibilityLayer data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid strokeDasharray="3 3" yAxisId="left" />
               <XAxis dataKey="date" tickLine={false} axisLine={false} />
               <YAxis
                 yAxisId="left"
