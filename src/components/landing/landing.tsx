@@ -98,7 +98,9 @@ export const Landing = () => {
                 viewport={{ once: true }}
               >
                 Federal Reserve Market{" "}
-                <span className="text-accent">Alerts</span>
+                <span className="underline decoration-2 underline-offset-8">
+                  Alerts
+                </span>
               </motion.h2>
               <motion.p
                 className="mb-8 text-xl text-background/70"
