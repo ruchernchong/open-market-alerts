@@ -1,17 +1,10 @@
+import { Alert, Button, Separator, Tooltip } from "@heroui/react";
+import { LineChart } from "@heroui-pro/react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, Building2, ExternalLink, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Line, LineChart, XAxis, YAxis } from "recharts";
 import { Loader } from "@/components/common/loader";
 import { View } from "@/components/settings/view";
-import { Alert, AlertTitle } from "@/components/ui/alert";
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import { Separator } from "@/components/ui/separator";
 import {
   getLatestReverseRepo,
   getRecentReverseRepoTrend,
@@ -62,13 +55,6 @@ export const Popup = () => {
       compactDisplay: "short",
     }).format(amount);
 
-  const chartConfig = {
-    amountAccepted: {
-      label: "Amount",
-      color: "var(--chart-1)",
-    },
-  } satisfies ChartConfig;
-
   const chartData =
     trendData
       ?.slice(0, 7)
@@ -92,45 +78,57 @@ export const Popup = () => {
 
   if (error)
     return (
-      <Alert variant="destructive">
-        <AlertCircle />
-        <AlertTitle>Error: {error.message}</AlertTitle>
+      <Alert status="danger">
+        <Alert.Indicator>
+          <AlertCircle />
+        </Alert.Indicator>
+        <Alert.Content>
+          <Alert.Title>Error: {error.message}</Alert.Title>
+        </Alert.Content>
       </Alert>
     );
 
   if (!operation)
     return (
       <Alert>
-        <Building2 />
-        <AlertTitle>No operations found</AlertTitle>
+        <Alert.Indicator>
+          <Building2 />
+        </Alert.Indicator>
+        <Alert.Content>
+          <Alert.Title>No operations found</Alert.Title>
+        </Alert.Content>
       </Alert>
     );
 
   return (
-    <div className="w-80 bg-white">
-      <div className="bg-gradient-to-r from-slate-800 to-slate-700 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-white" />
-            <h1 className="text-lg font-bold text-white">
-              Fed Open Market Alerts
-            </h1>
-          </div>
-          <button
-            type="button"
-            onClick={() => setCurrentView("settings")}
-            className="rounded-md p-1 text-white transition-colors hover:bg-white/10 hover:text-slate-200"
-          >
-            <Settings className="h-5 w-5" />
-          </button>
+    <div className="w-80 bg-surface">
+      <div className="flex items-center justify-between border-b border-border p-4">
+        <div className="flex items-center gap-2">
+          <Building2 className="h-5 w-5 text-accent" />
+          <h1 className="text-lg font-bold text-foreground">
+            Fed Open Market Alerts
+          </h1>
         </div>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              variant="ghost"
+              aria-label="Settings"
+              onPress={() => setCurrentView("settings")}
+            >
+              <Settings className="h-5 w-5" />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>Settings</Tooltip.Content>
+        </Tooltip>
       </div>
 
       <div className="space-y-4 p-4">
-        <div className="space-y-3">
+        <div className="space-y-3 tabular-nums">
           <div className="flex items-center justify-between">
-            <span className="text-slate-600">Date</span>
-            <span className="font-semibold">
+            <span className="text-muted">Date</span>
+            <span className="font-semibold text-foreground">
               {new Date(operation.operationDate).toLocaleDateString("en-US", {
                 day: "numeric",
                 month: "short",
@@ -140,22 +138,22 @@ export const Popup = () => {
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-600">Amount</span>
-            <span className="font-semibold text-green-600">
+            <span className="text-muted">Amount</span>
+            <span className="font-semibold text-success">
               {formatCurrency(operation.totalAmtAccepted)}
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-600">Rate</span>
-            <span className="font-semibold text-blue-600">
+            <span className="text-muted">Rate</span>
+            <span className="font-semibold text-accent">
               {operation.details[0]?.percentAwardRate.toFixed(2)}%
             </span>
           </div>
 
           <div className="flex items-center justify-between">
-            <span className="text-slate-600">Last Updated</span>
-            <span className="font-semibold text-slate-500">
+            <span className="text-muted">Last Updated</span>
+            <span className="font-semibold text-muted">
               {new Date(operation.lastUpdated).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -170,41 +168,38 @@ export const Popup = () => {
 
         {chartData.length > 0 && (
           <>
-            <div className="mb-2 text-xs font-medium text-slate-600">
+            <div className="mb-2 text-xs font-medium text-muted">
               7-Day Trend
             </div>
-            <ChartContainer config={chartConfig} className="h-32 w-full">
-              <LineChart accessibilityLayer data={chartData}>
-                <XAxis dataKey="date" axisLine={false} tickLine={false} />
-                <YAxis hide />
-                <ChartTooltip
-                  content={
-                    <ChartTooltipContent
-                      indicator="line"
-                      nameKey="amountAccepted"
-                    />
-                  }
-                />
-                <Line
-                  type="monotone"
-                  dataKey="amountAccepted"
-                  stroke="var(--color-amountAccepted)"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ChartContainer>
+            <LineChart
+              data={chartData}
+              height={128}
+              margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
+            >
+              <LineChart.XAxis dataKey="date" />
+              <LineChart.YAxis hide />
+              <LineChart.Line
+                dataKey="amountAccepted"
+                stroke="var(--chart-3)"
+                strokeWidth={2}
+                type="monotone"
+                dot={false}
+              />
+              <LineChart.Tooltip
+                content={
+                  <LineChart.TooltipContent
+                    valueFormatter={(v) => `$${Number(v).toFixed(1)}B`}
+                  />
+                }
+              />
+            </LineChart>
           </>
         )}
 
-        <button
-          type="button"
-          onClick={handleMoreDetails}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-slate-800 px-4 py-2 text-white transition-colors hover:bg-slate-700"
-        >
-          <span>More Details</span>
+        <Button fullWidth onPress={handleMoreDetails}>
+          More Details
           <ExternalLink className="size-4" />
-        </button>
+        </Button>
       </div>
     </div>
   );

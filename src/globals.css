@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "@heroui-pro/react/css";
+
+@plugin "@tailwindcss/typography";
+
+/*
+ * Neutral black-and-white theme.
+ * HeroUI's default accent is blue; override it to a near-black so surfaces stay
+ * monochrome and color is reserved for meaning (success/danger). Chart series
+ * would otherwise all derive from the accent (near-black) and become
+ * indistinguishable, so define an explicit greyscale ramp.
+ */
+:root,
+[data-theme="light"] {
+  --accent: oklch(0.22 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+
+  --chart-1: oklch(0.2 0 0);
+  --chart-2: oklch(0.34 0 0);
+  --chart-3: oklch(0.48 0 0);
+  --chart-4: oklch(0.64 0 0);
+  --chart-5: oklch(0.78 0 0);
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground;
+  }
+}

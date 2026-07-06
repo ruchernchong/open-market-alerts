@@ -1,15 +1,8 @@
+import { Alert, Card } from "@heroui/react";
 import { MessageSquare } from "lucide-react";
 import { Helmet } from "react-helmet-async";
 import { GithubIcon } from "@/components/common/github-icon";
 import { Layout } from "@/components/layout/Layout";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card.tsx";
 
 export const Contact = () => {
   return (
@@ -35,78 +28,81 @@ export const Contact = () => {
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
               <Card>
-                <CardHeader className="flex items-center gap-2">
+                <Card.Header className="flex items-center gap-2">
                   <GithubIcon className="size-6" />
-                  <CardTitle>GitHub Issues</CardTitle>
-                </CardHeader>
-                <CardContent>
+                  <Card.Title>GitHub Issues</Card.Title>
+                </Card.Header>
+                <Card.Content>
                   Report bugs, request features, or ask technical questions on
                   our GitHub repository.
-                </CardContent>
-                <CardFooter>
+                </Card.Content>
+                <Card.Footer>
                   <a
                     href="https://github.com/ruchernchong/fed-open-market-alerts/issues"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-slate-800 underline hover:text-slate-900"
+                    className="flex items-center gap-2 text-accent underline hover:text-accent-hover"
                   >
                     Open an Issue
                     <GithubIcon className="size-4" />
                   </a>
-                </CardFooter>
+                </Card.Footer>
               </Card>
 
               <Card>
-                <CardHeader className="flex items-center gap-2">
+                <Card.Header className="flex items-center gap-2">
                   <MessageSquare className="size-6" />
-                  <CardTitle>General Feedback</CardTitle>
-                </CardHeader>
-                <CardContent>
+                  <Card.Title>General Feedback</Card.Title>
+                </Card.Header>
+                <Card.Content>
                   Have general feedback or suggestions? Start a discussion on
                   our GitHub repository.
-                </CardContent>
-                <CardFooter>
+                </Card.Content>
+                <Card.Footer>
                   <a
                     href="https://github.com/ruchernchong/fed-open-market-alerts/discussions"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-slate-800 underline hover:text-slate-900"
+                    className="flex items-center gap-2 text-accent underline hover:text-accent-hover"
                   >
                     Start Discussion
                     <MessageSquare className="size-4" />
                   </a>
-                </CardFooter>
+                </Card.Footer>
               </Card>
             </div>
 
             <Card>
-              <CardHeader>
-                <CardTitle>Project Information</CardTitle>
-              </CardHeader>
-              <CardContent>
+              <Card.Header>
+                <Card.Title>Project Information</Card.Title>
+              </Card.Header>
+              <Card.Content>
                 Fed Open Market Alerts is an open-source project that provides
                 free access to Federal Reserve Open Market Operations data.
-              </CardContent>
-              <CardFooter className="flex flex-wrap gap-4 text-sm">
+              </Card.Content>
+              <Card.Footer className="flex flex-wrap gap-4 text-sm">
                 <a
                   href="https://github.com/ruchernchong/fed-open-market-alerts"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-800"
+                  className="inline-flex items-center gap-1 text-muted hover:text-foreground"
                 >
                   <GithubIcon className="size-4" />
                   GitHub Repository
                 </a>
-              </CardFooter>
+              </Card.Footer>
             </Card>
 
-            <Alert className="border-amber-200 bg-amber-50">
-              <AlertTitle className="text-amber-900">Response Time</AlertTitle>
-              <AlertDescription className="text-amber-800">
-                This is a personal project maintained in my spare time. While
-                I'll do my best to respond promptly, please allow for reasonable
-                response times, especially for complex issues.
-              </AlertDescription>
+            <Alert status="warning">
+              <Alert.Indicator />
+              <Alert.Content>
+                <Alert.Title>Response Time</Alert.Title>
+                <Alert.Description>
+                  This is a personal project maintained in my spare time. While
+                  I'll do my best to respond promptly, please allow for
+                  reasonable response times, especially for complex issues.
+                </Alert.Description>
+              </Alert.Content>
             </Alert>
           </div>
         </div>
