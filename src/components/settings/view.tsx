@@ -1,6 +1,11 @@
-import { Button, Separator, Switch, Tooltip } from "@heroui/react";
+import { Button, Separator, Spinner, Switch, Tooltip } from "@heroui/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, RotateCcw } from "lucide-react";
+import { ArrowLeft, Bell, RotateCcw } from "lucide-react";
+import { useEffect, useState } from "react";
+import {
+  getTestOperation,
+  showFedDataNotification,
+} from "@/services/notifications";
 import {
   getUserPreferences,
   resetUserPreferences,
@@ -13,14 +18,27 @@ interface ViewProps {
   onBack: () => void;
 }
 
+type TestStatus = "idle" | "sending" | "success" | "error";
+
 export const View = ({ onBack }: ViewProps) => {
   const queryClient = useQueryClient();
+  const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+  const [testError, setTestError] = useState<string>("");
 
   const { data: preferences = DEFAULT_PREFERENCES } = useQuery({
     queryKey: ["user-preferences"],
     queryFn: getUserPreferences,
     enabled: typeof chrome !== "undefined" && !!chrome.storage,
   });
+
+  useEffect(() => {
+    if (testStatus === "idle" || testStatus === "sending") return;
+    const timer = setTimeout(() => {
+      setTestStatus("idle");
+      setTestError("");
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [testStatus]);
 
   const updatePreference = async (updates: Partial<UserPreferences>) => {
     const newPreferences = { ...preferences, ...updates };
@@ -31,6 +49,19 @@ export const View = ({ onBack }: ViewProps) => {
   const handleReset = async () => {
     await resetUserPreferences();
     queryClient.setQueryData(["user-preferences"], DEFAULT_PREFERENCES);
+  };
+
+  const handleTestNotification = async () => {
+    setTestStatus("sending");
+    setTestError("");
+    try {
+      await showFedDataNotification(getTestOperation(), { isTest: true });
+      setTestStatus("success");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      setTestError(message);
+      setTestStatus("error");
+    }
   };
 
   return (
@@ -132,6 +163,42 @@ export const View = ({ onBack }: ViewProps) => {
               </div>
             </div>
           </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              isPending={testStatus === "sending"}
+              isDisabled={testStatus === "sending"}
+              onPress={handleTestNotification}
+            >
+              {({ isPending }) => (
+                <>
+                  {isPending ? (
+                    <Spinner color="current" size="sm" />
+                  ) : (
+                    <Bell className="h-4 w-4" />
+                  )}
+                  Test notification
+                </>
+              )}
+            </Button>
+          </div>
+          {testStatus === "success" && (
+            <p className="text-xs text-success">
+              Test notification sent. Check your notifications.
+            </p>
+          )}
+          {testStatus === "error" && (
+            <p className="text-xs text-danger">
+              Failed: {testError || "unknown error"}. Try re-enabling
+              notifications for this extension.
+            </p>
+          )}
         </div>
 
         <Separator />
