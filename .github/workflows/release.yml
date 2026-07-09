@@ -9,9 +9,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  HEROUI_AUTH_TOKEN: ${{ secrets.HEROUI_AUTH_TOKEN }}
-
 jobs:
   checks:
     name: Checks
@@ -28,6 +25,8 @@ jobs:
         uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1.0.0
         with:
           cache: true
+        env:
+          HEROUI_AUTH_TOKEN: ${{ secrets.HEROUI_AUTH_TOKEN }}
 
       # Parallel steps (GitHub Actions, 2026-06-25): one checkout + install, then
       # lint and typecheck run concurrently on the same runner.
@@ -62,6 +61,8 @@ jobs:
 
       - name: Setup pnpm, Node & install
         uses: pnpm/setup@5d160c5bc68a09337ad0d5654e237e03253b5879 # v1.0.0
+        env:
+          HEROUI_AUTH_TOKEN: ${{ secrets.HEROUI_AUTH_TOKEN }}
 
       - name: Build
         run: pnpm build
