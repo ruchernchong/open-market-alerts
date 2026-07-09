@@ -2,189 +2,113 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+@AGENTS.md
+
 ## Project Overview
 
-Fed Open Market Alerts is a React application built with TypeScript and Vite that monitors Federal Reserve
-Open Market Operations with automated alerts for new operations. The project can be deployed as both a multi-page
-web application (with React Router) and Chrome extension using the @crxjs/vite-plugin. The web application features
-a landing page, dashboard, and extension redirect page. The Chrome extension features a dedicated popup
-dashboard with user preference management and unread notification badges.
+Fed Open Market Alerts monitors the New York Fed's reverse-repo operations and alerts on new data. A single
+Vite bundle serves two runtime modes from the same code: a multi-page React Router web app, and a Manifest V3
+Chrome extension (popup + background service worker) built via `@crxjs/vite-plugin`. `main.tsx` picks the mode
+at runtime — no separate build targets.
+
+## Monorepo Layout
+
+pnpm workspaces + Turborepo. The root package (`fed-open-market-alerts`) holds tooling only; all application
+code lives in `apps/extensions/` (package `@tartinerlabs/extensions`). `packages/` is currently empty.
+
+- Root scripts delegate to `turbo run <task>`; `turbo.json` sets `envMode: strict`.
+- App code: `apps/extensions/src/`. Paths below are relative to there unless noted.
 
 ## Development Commands
 
-- `pnpm dev` - Start development server
-- `pnpm build` - Build the project (TypeScript compilation + Vite build)
-- `pnpm typecheck` - Type-check the project (`tsc -b`)
-- `pnpm lint` - Run Biome linting with automatic fixes
-- `pnpm preview` - Preview the production build
-- `pnpm release` - Run semantic-release locally (for testing)
+Run from the repo root:
 
-Note: This project uses pnpm as the package manager. Node.js 26 is pinned via `.node-version`.
+- `pnpm dev` — `turbo run dev` → `vite` (dev server + extension HMR)
+- `pnpm build` — `turbo run build` → `vite build` (produces the MV3 extension via crxjs)
+- `pnpm typecheck` — `turbo run typecheck` → `tsc --noEmit` (no project references; there is no `tsc -b`)
+- `pnpm preview` — `turbo run preview` → `vite preview`
+- `pnpm lint` — `biome check --write .` (lint + format with autofix, run at root, not via turbo)
+- `pnpm release` — `semantic-release` (normally CI-only)
 
-## Code Architecture
+Notes:
 
-### Data Flow
+- **There are no tests** — no test runner, no `test` script, no `*.test.*` files. Do not assume a test step exists.
+- Node 26 (`.node-version`, `devEngines.runtime ^26.0.0`); pnpm `11.10.0` (`packageManager`).
 
-- **Services Layer** (`src/services/`): API integration, notifications, scheduling, and storage management
-    - `reverse-repo.ts`: Fed markets API integration
-    - `notifications.ts`: Chrome extension notification handling
-    - `scheduler.ts`: Automated data check scheduling for weekdays
-    - `storage.ts`: Chrome extension storage for timestamp tracking
-- **Types** (`src/types/`): TypeScript interfaces for Fed markets API responses and user preferences
-- **Components** (`src/components/`): React components with co-located data fetching using TanStack Query
-    - `common/`: Shared components (loader, metric-card)
-    - `reverse-repo/`: Federal Reserve operations components
-    - `settings/`: User preference management components
-    - `dashboard/`: Dashboard page component
-    - `landing/`: Landing page component
-- **UI Components**: HeroUI (@heroui/react + @heroui-pro/react) with React Aria primitives
-- **Pages** (`src/pages/`): Page components for different routes
-- **Routing** (`src/AppRouter.tsx`): React Router configuration with route definitions
-- **Popup Component** (`src/popup.tsx`): Chrome extension popup dashboard with market data and settings
-- **Background Script** (`src/background.ts`): Chrome extension service worker for automated notifications
+## Architecture
 
-### API Integration
+### Dual runtime mode
 
-- Base API: `https://markets.newyorkfed.org/api/rp/reverserepo/all/results`
-- Primary endpoint: `/lastTwoWeeks.json`
-- Data fetching handled by TanStack Query with `useQuery` hooks
-- Error handling and loading states managed at component level
+`main.tsx` calls `isExtensionPopup()` (checks `chrome.runtime.id` + `chrome-extension:` protocol). If true it renders
+`Popup` (`popup.tsx`); otherwise it renders `AppRouter` (the web app). A single `QueryClient` is created here and
+provided to both.
 
-### Chrome Extension Configuration
+### Services (`services/`)
 
-- Manifest V3 extension defined in `manifest.config.ts`
-- Host permissions for `markets.newyorkfed.org` and localhost
-- Extension popup uses dedicated `popup.tsx` component with market dashboard and settings
-- User preference management via `src/components/settings/view.tsx` component
-- Unread notification badges on extension icon
-- Background service worker (`src/background.ts`) handles scheduled notifications
-- Push notifications with chrome.notifications API for new Fed operations
+Pure/side-effecting modules the popup, web app, and background worker share:
 
-### Notification System
+- `reverse-repo.ts` — Fed data. `FED_MARKETS_API_BASE = https://markets.newyorkfed.org/api/rp/reverserepo/all/results`;
+  `getLastTwoWeeks()` fetches `/lastTwoWeeks.json`. Helpers `getLatestReverseRepo()` / `getRecentReverseRepoTrend()`.
+  Plain `fetch`, no auth.
+- `scheduler.ts` — `chrome.alarms` scheduling. `SCHEDULE_CONFIG` = `CHECK_HOUR: 13`, `CHECK_MINUTE: 20`,
+  `EST_UTC_OFFSET: -5`; `isWeekday()` gates Mon–Fri; `scheduleNextFedDataCheck()` creates the `fedDataCheck` alarm.
+- `notifications.ts` — builds/shows `chrome.notifications`; includes a test-operation builder for the settings panel.
+- `storage.ts` — wraps `chrome.storage.local`. Keys: `last_updated_timestamp`, `has_unread_notification`,
+  `user_preferences`.
 
-- **Automated Scheduling**: Checks for new Fed data weekdays at 1:20 PM EST
-- **Smart Notifications**: Only notifies on actual data changes using timestamp comparison
-- **User Preferences**: Configurable notification settings via extension popup
-- **Badge Management**: Visual indicators for unread notifications on extension icon
-- **Storage Integration**: Tracks last updated timestamps to prevent duplicate notifications
-- **Manual Triggers**: Background script supports on-demand data checks via message passing
+### Background worker (`background.ts`, MV3 service worker)
 
-## Development Patterns
+`checkFedData()` fetches the latest operation and compares `lastUpdated` against the stored timestamp; on change it
+notifies **only if** `preferences.notificationsEnabled && preferences.immediateNotifications`, then stores the new
+timestamp and sets the unread flag. `updateBadge()` shows a red "!" badge when unread. Listeners: `onStartup` /
+`onInstalled` (schedule + badge), `alarms.onAlarm` (check + reschedule), `runtime.onMessage` for
+`{action: "checkFedDataNow"}` (manual check), `storage.onChanged` (refresh badge).
 
-### Component Structure
+### Data fetching
 
-- **Routing**: React Router with multi-page web application support
-    - Landing page (`/`) with features overview and latest data preview
-    - Dashboard page (`/dashboard`) with full market data and trends
-    - Extension redirect page (`/extension`) for Chrome Web Store
-- **SEO**: React Helmet Async for dynamic meta tags and page titles
-- **Data Fetching**: Components use TanStack Query for API integration
-- **UI Patterns**: Loading and error states handled with reusable `<Loader>` and `<Alert>` components
-- **Shared Components**: Metric cards and data tables follow established patterns
-- **Chrome Extension**: Popup (`popup.tsx`) provides dashboard with market data and settings access
-- **Settings Management**: Dedicated `src/components/settings/view.tsx` component with preference controls
+Components call TanStack Query's `useQuery` directly with the service functions as `queryFn` — there is no custom-hook
+layer. Query keys in use: `["latest-reverse-repo"]`, `["reverse-repo-trend"]`, `["user-preferences"]`. Settings
+(`settings/view.tsx`) write preferences via the storage service then `queryClient.setQueryData(["user-preferences"], …)`
+(cache-write, not `useMutation`), gated with `enabled: typeof chrome !== "undefined" && !!chrome.storage`.
 
-### Styling
+Chrome API guards live at the call sites (`main.tsx`, popup, settings); the service modules call `chrome.*` unguarded
+by design, since they're only reached from popup/settings/background contexts.
 
-- Tailwind CSS for styling with custom configuration
-- UI components from HeroUI library (@heroui/react, @heroui-pro/react)
-- Responsive design patterns (mobile-first grid layouts)
-- Gradient backgrounds and modern card layouts
-- Chrome Web Store badge integration
+### Routing & config
 
-### Type Safety
+- Routes (`AppRouter.tsx`): `/` (Landing), `/dashboard`, `/extension`, `/privacy-policy`, `/terms-of-service`,
+  `/contact`. SEO via React Helmet Async.
+- `config/index.ts` exposes `WEB_APP_URL` / `EXTENSION_*` from `import.meta.env`. `vite.config.ts` `define`s
+  `WEB_APP_URL` (default `http://localhost:5173`) and sets custom `manualChunks` (charts, heroui, tanstack, motion,
+  react-vendor, vendor).
+- `manifest.config.ts` (crxjs): MV3, `permissions: [notifications, alarms, storage]`, `host_permissions:
+  [markets.newyorkfed.org, localhost]`, `background.service_worker: src/background.ts`.
 
-- Strict TypeScript configuration with path aliasing (`@/` for src)
-- Comprehensive types for Fed markets API responses
-- Component props and state properly typed
+## Tooling & Conventions
 
-## Code Quality
+- **Biome** (`biome.json`): recommended rules, double quotes, space indent, organize-imports on; excludes `**/dist`
+  and `**/*.svg`; uses `.gitignore` via VCS integration.
+- **TypeScript**: strict, `verbatimModuleSyntax`, path alias `@/* → apps/extensions/src/*`.
+- **UI**: HeroUI v3 (`@heroui/react` + `@heroui-pro/react`) on Tailwind CSS v4 (no v3). v3 uses compound components
+  (e.g. `Sheet.Trigger`) and `onPress` (not `onClick`); no Provider needed.
+- **Commits & releases**: Conventional Commits + semantic-release. `main` produces beta prereleases. When creating
+  commits, use short title-only messages (no body). Keep `conventional-changelog-conventionalcommits` pinned to
+  `8.0.0` — 9.x/10.x break semantic-release notes.
 
-### Linting & Formatting
+## CI
 
-- Biome for linting and formatting (replaces ESLint/Prettier)
-- Double quotes for JavaScript/TypeScript
-- Space indentation
-- Automatic import organization
-- UI components and utility files excluded from linting
+`.github/workflows/release.yml` runs on push to `main`: a `checks` job (`biome ci .` + `pnpm typecheck` in parallel),
+then a `release` job (`pnpm build` + `pnpm release`). All actions are SHA-pinned; installs need the
+`HEROUI_AUTH_TOKEN` secret.
 
-### File Organization
+## Gotchas
 
-- Services contain pure functions for API calls
-- Components organized by feature in dedicated folders:
-    - `common/`: Shared components (loader, metric-card)
-    - `reverse-repo/`: Federal Reserve operations components
-    - `settings/`: User preference management components
-- Types mirror API response structure
-
-## Commit Conventions & Release Management
-
-### Conventional Commits
-
-This project uses [Conventional Commits](https://conventionalcommits.org/) with automated semantic versioning:
-
-**Commit Format:**
-
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-**Commit Types:**
-
-- `feat:` - New features (triggers minor version bump)
-- `fix:` - Bug fixes (triggers patch version bump)
-- `docs:` - Documentation changes
-- `style:` - Code style changes (formatting, etc.)
-- `refactor:` - Code refactoring without feature changes
-- `perf:` - Performance improvements
-- `test:` - Adding or updating tests
-- `chore:` - Maintenance tasks, dependency updates
-- `ci:` - CI/CD configuration changes
-
-**Examples:**
-
-```bash
-feat(reverse-repo): add real-time data updates
-fix(charts): resolve tooltip positioning issue
-docs: update API integration guide
-chore(deps): update @tanstack/react-query to v5.85.6
-```
-
-**Breaking Changes:**
-
-- Add `!` after type: `feat!: redesign API response structure`
-- Or include `BREAKING CHANGE:` in commit footer
-
-### Automated Releases
-
-- **Main Branch:** Produces prerelease versions (e.g., `1.0.0-beta.1`, `1.0.0-beta.2`)
-- **Releases:** Triggered automatically on push to main via GitHub Actions
-- **Version Control:** Managed by semantic-release based on commit messages
-- **Git Hooks:** Commitlint validates commit messages before commit
-
-**Release Process:**
-
-1. Make changes following conventional commit format
-2. Push to main branch
-3. GitHub Actions runs tests, linting, build, and semantic-release
-4. New version published with auto-generated changelog and GitHub release
-
-## Build Process
-
-The build process creates both web and extension builds:
-
-1. TypeScript compilation (`tsc -b`)
-2. Vite build with React and Tailwind plugins
-3. Chrome extension manifest generation via @crxjs/vite-plugin
-
-## Claude-Specific Instructions
-
-- When creating git commits, use short commit messages (title only) without detailed descriptions
-- Follow the conventional commit format but keep messages concise
+- **DST**: `scheduler.ts` hardcodes `EST_UTC_OFFSET: -5` with no daylight-saving handling, so the "1:20 PM EST" check
+  actually fires an hour off in summer (EDT).
+- **`dailySummary`**: exists in `types/preferences.ts` and the settings UI but has **no implementing logic** in
+  `background.ts` — only `immediateNotifications` gates notifications. The setting is currently non-functional.
+- **`App.tsx`**: dead/legacy — not imported anywhere (`main.tsx` renders `Popup`/`AppRouter`; `Dashboard` renders
+  `Latest`/`Trend` itself).
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker
