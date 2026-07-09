@@ -53,8 +53,8 @@ popup dashboard with user preference management.
 
 ```bash
 # Clone the repository
-git clone https://github.com/ruchernchong/fed-open-market-alerts.git
-cd fed-open-market-alerts
+git clone https://github.com/tartinerlabs/open-market-alerts.git
+cd open-market-alerts
 
 # Install dependencies
 pnpm install

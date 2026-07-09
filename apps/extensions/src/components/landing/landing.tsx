@@ -488,7 +488,7 @@ export const Landing = () => {
                 This project is also open-source - you can view the code,
                 contribute, or report issues on{" "}
                 <a
-                  href="https://github.com/ruchernchong/fed-open-market-alerts"
+                  href="https://github.com/tartinerlabs/open-market-alerts"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-accent underline hover:text-accent-hover"

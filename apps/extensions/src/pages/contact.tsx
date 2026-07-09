@@ -38,7 +38,7 @@ export const Contact = () => {
                 </Card.Content>
                 <Card.Footer>
                   <a
-                    href="https://github.com/ruchernchong/fed-open-market-alerts/issues"
+                    href="https://github.com/tartinerlabs/open-market-alerts/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-accent underline hover:text-accent-hover"
@@ -60,7 +60,7 @@ export const Contact = () => {
                 </Card.Content>
                 <Card.Footer>
                   <a
-                    href="https://github.com/ruchernchong/fed-open-market-alerts/discussions"
+                    href="https://github.com/tartinerlabs/open-market-alerts/discussions"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-accent underline hover:text-accent-hover"
@@ -82,7 +82,7 @@ export const Contact = () => {
               </Card.Content>
               <Card.Footer className="flex flex-wrap gap-4 text-sm">
                 <a
-                  href="https://github.com/ruchernchong/fed-open-market-alerts"
+                  href="https://github.com/tartinerlabs/open-market-alerts"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 text-muted hover:text-foreground"

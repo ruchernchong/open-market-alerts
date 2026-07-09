@@ -94,7 +94,7 @@ export const Privacy = () => {
             </Link>{" "}
             or{" "}
             <a
-              href="https://github.com/ruchernchong/fed-open-market-alerts"
+              href="https://github.com/tartinerlabs/open-market-alerts"
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent underline hover:text-accent-hover"

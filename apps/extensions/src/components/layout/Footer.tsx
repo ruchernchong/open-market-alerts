@@ -46,7 +46,7 @@ export const Footer = () => {
                 Contact
               </Link>
               <a
-                href="https://github.com/ruchernchong/fed-open-market-alerts"
+                href="https://github.com/tartinerlabs/open-market-alerts"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted transition-colors hover:text-foreground"
