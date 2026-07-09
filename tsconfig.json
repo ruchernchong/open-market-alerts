@@ -1,4 +1,8 @@
 {
-  "files": [],
-  "references": [{ "path": "./apps/extensions/tsconfig.json" }]
+  "compilerOptions": {
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "verbatimModuleSyntax": true
+  }
 }
