@@ -4,10 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "pnpm --filter @tartinerlabs/extensions dev",
-    "build": "pnpm --filter @tartinerlabs/extensions build",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
     "typecheck": "pnpm --filter @tartinerlabs/extensions typecheck",
-    "preview": "pnpm --filter @tartinerlabs/extensions preview",
+    "preview": "turbo run preview",
     "lint": "biome check --write .",
     "prepare": "husky",
     "release": "semantic-release"
